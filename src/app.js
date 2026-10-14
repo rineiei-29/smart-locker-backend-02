@@ -1,3 +1,21 @@
+/**
+ * =========================================================================================
+ * ไฟล์: src/app.js (Express Application Setup & Router Aggregator)
+ * -----------------------------------------------------------------------------------------
+ * หน้าที่หลัก:
+ * - ตัวกลางตั้งค่า Express Application, Middleware (JSON parser, Static files)
+ * - รวบรวมและลงทะเบียนเส้นทาง API Routes ทั้งหมด 8 โมดูลหลัก:
+ *   1) authRoutes: ระบบเข้าสู่ระบบ / สมัครสมาชิก (/login, /register)
+ *   2) lockerRoutes: ระบบตู้ล็อกเกอร์และสถานะ (/lockers, /lockers/:id/status)
+ *   3) bookingRoutes: ระบบการจองตู้ (/my-bookings, /bookings, /batch-action, /relocate)
+ *   4) paymentRoutes: ระบบเซสชันชำระเงิน QR (/payment-sessions, /confirm)
+ *   5) pinRoutes: ระบบปลดล็อกและคืนตู้ด้วย PIN (/pin/open, /pin/close)
+ *   6) logRoutes: ระบบบันทึกเหตุการณ์ประวัติ (/logs)
+ *   7) userRoutes: ระบบจัดการผู้ใช้งาน (/users, /users/:id/status)
+ *   8) reportRoutes: ระบบสถิติ แดชบอร์ด และประวัติผู้ใช้ (/my-history, /reports/dashboard)
+ * =========================================================================================
+ */
+
 const express = require('express');
 const path = require('path');
 

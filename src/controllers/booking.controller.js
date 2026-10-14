@@ -188,6 +188,56 @@ async function batchAction(req, res) {
   res.json({ success: true, results });
 }
 
+// ==================================================================
+// ประวัติการใช้งานของผู้ใช้ที่เข้าสู่ระบบ (เฉพาะรายการที่คืนตู้แล้ว หรือยกเลิก)
+// ==================================================================
+async function myHistory(req, res) {
+  try {
+    const { user_id } = req.query;
+    if (!user_id) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุ user_id' });
+    }
+
+    const result = await pool.query(
+      `SELECT b.*, l.locker_number, l.size, l.location
+       FROM bookings b
+       JOIN lockers l ON b.locker_id = l.locker_id
+       WHERE b.user_id = $1 AND b.status IN ('completed', 'cancelled')
+       ORDER BY COALESCE(b.completed_at, b.end_time, b.created_at) DESC`,
+      [user_id]
+    );
+
+    const rows = result.rows.map((r) => {
+      let actual_minutes = null;
+      if (r.completed_at && r.start_time) {
+        const diff = Math.round((new Date(r.completed_at) - new Date(r.start_time)) / 60000);
+        actual_minutes = diff > 0 ? diff : (r.planned_minutes || 15);
+      }
+      return {
+        ...r,
+        actual_minutes,
+        amount: Number(r.amount || r.price || 0),
+      };
+    });
+
+    const completed = rows.filter((r) => r.status === 'completed');
+    const summary = {
+      completed_count: completed.length,
+      total_spent: completed.reduce((sum, r) => sum + (r.amount || 0), 0),
+      total_minutes: completed.reduce((sum, r) => sum + (r.actual_minutes || r.planned_minutes || 0), 0),
+    };
+
+    res.json({
+      success: true,
+      data: rows,
+      summary,
+    });
+  } catch (error) {
+    console.error('Error fetching my-history:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงประวัติการใช้งาน' });
+  }
+}
+
 module.exports = {
   createBooking,
   myBookings,
@@ -196,4 +246,6 @@ module.exports = {
   batchAction,
   finalizeBooking,
   normalizePlannedMinutes,
+  myHistory,
 };
+
